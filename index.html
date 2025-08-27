@@ -1,1 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <style>
+    * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: black;
+    font-family: Arial, sans-serif;
+}
+
+#gameArea {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    background: #000;
+    overflow: hidden;
+    border: 2px solid white;
+}
+
+#spaceship {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/3/3d/Large_spaceship_icon.svg');
+    background-size: cover;
+    background-position: center;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#asteroid {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background-color: gray;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+  </style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Explorer Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="gameArea">
+        <div id="spaceship"></div>
+        <div id="asteroid"></div>
+    </div>
+    <script">
+  // Game variables
+const spaceship = document.getElementById('spaceship');
+const asteroid = document.getElementById('asteroid');
+const gameArea = document.getElementById('gameArea');
+let spaceshipX = 375; // initial position of spaceship (centered)
+let spaceshipY = 550; // initial position (bottom of the screen)
+let asteroidX = 375; // initial position of asteroid (centered)
+let asteroidY = -50; // starts above the game area
+let gameOver = false;
+let speed = 2;
+
+// Move spaceship left and right with arrow keys
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft' && spaceshipX > 0) {
+        spaceshipX -= 15;
+    } else if (event.key === 'ArrowRight' && spaceshipX < 750) {
+        spaceshipX += 15;
+    }
+    updatePosition();
+});
+
+// Update spaceship position
+function updatePosition() {
+    spaceship.style.left = spaceshipX + 'px';
+    spaceship.style.bottom = spaceshipY + 'px';
+}
+
+// Move asteroid downwards
+function moveAsteroid() {
+    if (gameOver) return;
+
+    asteroidY += speed;
+    if (asteroidY > 600) {
+        // Reset asteroid to top
+        asteroidY = -50;
+        asteroidX = Math.floor(Math.random() * (750 - 50)); // Random horizontal position
+    }
+
+    // Collision detection
+    if (
+        asteroidY + 50 >= spaceshipY &&
+        asteroidY <= spaceshipY + 50 &&
+        asteroidX + 50 >= spaceshipX &&
+        asteroidX <= spaceshipX + 50
+    ) {
+        gameOver = true;
+        alert('Game Over! Try Again!');
+    }
+
+    asteroid.style.left = asteroidX + 'px';
+    asteroid.style.top = asteroidY + 'px';
+
+    requestAnimationFrame(moveAsteroid); // Keep the asteroid moving
+}
+
+// Start the game
+function startGame() {
+    moveAsteroid();
+}
+
+startGame();
+
+  </script>
+</body>
+</html>
 
