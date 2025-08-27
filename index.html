@@ -1,128 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
-  <style>
-    * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: black;
-    font-family: Arial, sans-serif;
-}
-
-#gameArea {
-    position: relative;
-    width: 800px;
-    height: 600px;
-    background: #000;
-    overflow: hidden;
-    border: 2px solid white;
-}
-
-#spaceship {
-    position: absolute;
-    width: 50px;
-    height: 50px;
-    background-image: url('https://upload.wikimedia.org/wikipedia/commons/3/3d/Large_spaceship_icon.svg');
-    background-size: cover;
-    background-position: center;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-#asteroid {
-    position: absolute;
-    width: 50px;
-    height: 50px;
-    background-color: gray;
-    top: -50px;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-  </style>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Explorer Game</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Dodge the Blocks Game</title>
+  <style>
+    canvas {
+      background: #222;
+      display: block;
+      margin: 0 auto;
+    }
+    body {
+      text-align: center;
+      color: white;
+      font-family: sans-serif;
+      background-color: #111;
+    }
+  </style>
 </head>
 <body>
-    <div id="gameArea">
-        <div id="spaceship"></div>
-        <div id="asteroid"></div>
-    </div>
-    <script">
-  // Game variables
-const spaceship = document.getElementById('spaceship');
-const asteroid = document.getElementById('asteroid');
-const gameArea = document.getElementById('gameArea');
-let spaceshipX = 375; // initial position of spaceship (centered)
-let spaceshipY = 550; // initial position (bottom of the screen)
-let asteroidX = 375; // initial position of asteroid (centered)
-let asteroidY = -50; // starts above the game area
-let gameOver = false;
-let speed = 2;
+  <h1>Dodge the Blocks</h1>
+  <p>Use arrow keys (← →), A/D or mouse to move. Avoid the blocks!</p>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
 
-// Move spaceship left and right with arrow keys
-document.addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowLeft' && spaceshipX > 0) {
-        spaceshipX -= 15;
-    } else if (event.key === 'ArrowRight' && spaceshipX < 750) {
-        spaceshipX += 15;
-    }
-    updatePosition();
-});
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
 
-// Update spaceship position
-function updatePosition() {
-    spaceship.style.left = spaceshipX + 'px';
-    spaceship.style.bottom = spaceshipY + 'px';
-}
+    const player = {
+      x: canvas.width / 2 - 20,
+      y: canvas.height - 30,
+      width: 40,
+      height: 20,
+      speed: 5,
+      moveLeft: false,
+      moveRight: false,
+    };
 
-// Move asteroid downwards
-function moveAsteroid() {
-    if (gameOver) return;
+    const blocks = [];
+    let score = 0;
+    let gameOver = false;
 
-    asteroidY += speed;
-    if (asteroidY > 600) {
-        // Reset asteroid to top
-        asteroidY = -50;
-        asteroidX = Math.floor(Math.random() * (750 - 50)); // Random horizontal position
+    function spawnBlock() {
+      const size = 30;
+      const x = Math.random() * (canvas.width - size);
+      blocks.push({ x, y: -size, size, speed: 2 + Math.random() * 3 });
     }
 
-    // Collision detection
-    if (
-        asteroidY + 50 >= spaceshipY &&
-        asteroidY <= spaceshipY + 50 &&
-        asteroidX + 50 >= spaceshipX &&
-        asteroidX <= spaceshipX + 50
-    ) {
-        gameOver = true;
-        alert('Game Over! Try Again!');
+    setInterval(spawnBlock, 1000);
+
+    function update() {
+      if (gameOver) return;
+
+      // Move player
+      if (player.moveLeft) player.x -= player.speed;
+      if (player.moveRight) player.x += player.speed;
+
+      // Clamp player position
+      player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+
+      // Move blocks
+      for (let block of blocks) {
+        block.y += block.speed;
+
+        // Check collision
+        if (
+          block.y + block.size > player.y &&
+          block.x < player.x + player.width &&
+          block.x + block.size > player.x
+        ) {
+          gameOver = true;
+        }
+      }
+
+      // Remove off-screen blocks and increase score
+      for (let i = blocks.length - 1; i >= 0; i--) {
+        if (blocks[i].y > canvas.height) {
+          blocks.splice(i, 1);
+          score++;
+        }
+      }
     }
 
-    asteroid.style.left = asteroidX + 'px';
-    asteroid.style.top = asteroidY + 'px';
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    requestAnimationFrame(moveAsteroid); // Keep the asteroid moving
-}
+      // Draw player
+      ctx.fillStyle = "#0f0";
+      ctx.fillRect(player.x, player.y, player.width, player.height);
 
-// Start the game
-function startGame() {
-    moveAsteroid();
-}
+      // Draw blocks
+      ctx.fillStyle = "#f00";
+      for (let block of blocks) {
+        ctx.fillRect(block.x, block.y, block.size, block.size);
+      }
 
-startGame();
+      // Draw score
+      ctx.fillStyle = "#fff";
+      ctx.font = "20px Arial";
+      ctx.fillText("Score: " + score, 10, 25);
 
+      if (gameOver) {
+        ctx.fillStyle = "red";
+        ctx.font = "30px Arial";
+        ctx.fillText("GAME OVER", canvas.width / 2 - 90, canvas.height / 2);
+      }
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Keyboard controls
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft" || e.key === "a") player.moveLeft = true;
+      if (e.key === "ArrowRight" || e.key === "d") player.moveRight = true;
+    });
+
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "ArrowLeft" || e.key === "a") player.moveLeft = false;
+      if (e.key === "ArrowRight" || e.key === "d") player.moveRight = false;
+    });
+
+    // Mouse controls
+    canvas.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      if (mouseX < player.x + player.width / 2) {
+        player.moveLeft = true;
+        player.moveRight = false;
+      } else {
+        player.moveRight = true;
+        player.moveLeft = false;
+      }
+    });
+
+    canvas.addEventListener("mouseleave", () => {
+      player.moveLeft = false;
+      player.moveRight = false;
+    });
+
+    gameLoop();
   </script>
 </body>
 </html>
-
